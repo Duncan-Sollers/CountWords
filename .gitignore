@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+/CountWords/ConsoleApplication1/x64/Debug
+/.vs
+/CountWords/.vs/CountWords
