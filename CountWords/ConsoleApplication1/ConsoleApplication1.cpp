@@ -11,6 +11,9 @@ enum Flag {unknown,unique,count,uniqueAlpha,countAlpha,grep,lineNum,quit};
 
 
 Flag readFlag(char* argv[]);
+void processFiles(int argc, char* argv[], Flag flag,
+                  std::set<std::string>& uniqueTokens,
+                  std::map<std::string, int>& uniqueTokensCount);
 void uniqueWords(int argc, char* argv[], std::set<std::string>& uniqueWords);
 void countOfUniqueWords(int argc, char* argv[],
                         std::map<std::string, int>& uniqueWords);
@@ -37,15 +40,19 @@ int main(int argc, char* argv[]) {
       case unknown:
         break;
       case unique:
+        processFiles(argc, argv, flag, uniqueTokens, uniqueTokensCount);
         uniqueWords(argc, argv, uniqueTokens);
         break;
       case count:
+        processFiles(argc, argv, flag, uniqueTokens, uniqueTokensCount);
         countOfUniqueWords(argc, argv, uniqueTokensCount);
         break;
       case uniqueAlpha:
+        processFiles(argc, argv, flag, uniqueTokens, uniqueTokensCount);
         uniqueLetters(argc, argv, uniqueTokens);
         break;
       case countAlpha:
+        processFiles(argc, argv, flag, uniqueTokens, uniqueTokensCount);
         countOfUniqueLetters(argc, argv, uniqueTokensCount);
         break;
       case grep:
@@ -56,6 +63,30 @@ int main(int argc, char* argv[]) {
         break;
       default:
         break;
+  }
+}
+
+void processFiles(int argc, char* argv[], Flag flag, std::set<std::string>& uniqueTokens, std::map<std::string, int>& uniqueTokensCount) {
+  std::vector<std::string> fileNames;
+  for (int i = 2; i < argc; i++) {
+    std::string fileName(argv[i]);
+    std::cout << fileName << std::endl;
+    fileNames.push_back(fileName);
+  }
+  for (auto cur : fileNames) {
+    std::fstream file(cur);
+    std::string line;
+    while (getline(file, line)) {
+      if ((flag == unique) or (flag == count)) {
+        storeLineTokens(uniqueTokens, line);
+        storeLineTokens(uniqueTokensCount, line);
+      }
+      if ((flag == uniqueAlpha) or (flag == countAlpha)) {
+        storeLineTokensAlpha(uniqueTokens, line);
+        storeLineTokensAlpha(uniqueTokensCount, line);
+      }
+    }
+    file.close();
   }
 }
 
@@ -89,108 +120,32 @@ Flag readFlag(char* argv[]) {
 
 void uniqueWords(int argc, char* argv[], std::set<std::string>& uniqueWords) { 
   std::cout << "In unique Words\n"; 
-  std::vector<std::string> fileNames;
-
-  for (int i = 2; i < argc; i++) {
-    std::string fileName(argv[i]);
-    std::cout << fileName << std::endl;
-    fileNames.push_back(fileName);
-  }
-  
-  for (auto cur : fileNames) {
-    std::fstream file(cur);
-    std::string line;
-    while (getline(file, line)) {
-
-      //Redundant, and less efficient method!
-      // 
-      // std::cout << line << std::endl;
-      /* std::stringstream removeSpaces(line);
-      while (getline(removeSpaces, line, ' ')) {
-        std::stringstream removeCommas(line);
-
-        while (getline(removeCommas, line, ',')) {
-          uniqueWords.insert(line);
-        }
-      }*/
-
-
-      storeLineTokens(uniqueWords,line);
-    }
-    for (const auto& cur : uniqueWords) {
-      std::cout << cur << std::endl;
-    }
-    file.close();
+  for (const auto& cur : uniqueWords) {
+    std::cout << cur << std::endl;
   }
 }
 
 void countOfUniqueWords(int argc, char* argv[],
                         std::map<std::string, int>& uniqueWords) { 
   std::cout << "In count of Unique Words\n";
-  std::vector<std::string> fileNames;
-
-  for (int i = 2; i < argc; i++) {
-    std::string fileName(argv[i]);
-    std::cout << fileName << std::endl;
-    fileNames.push_back(fileName);
-  }
-  
-  for (auto cur : fileNames) {
-    std::fstream file(cur);
-    std::string line;
-    while (getline(file, line)) {
-      storeLineTokens(uniqueWords, line);
-    }
-    for (const auto& cur : uniqueWords) {
-      std::cout << cur.first << " => " << cur.second << std::endl;
-    }
-    file.close();
+  for (const auto& cur : uniqueWords) {
+    std::cout << cur.first << " => " << cur.second << std::endl;
   }
   
 }
 
 void uniqueLetters(int argc, char* argv[], std::set<std::string>& uniqueLetters) {
   std::cout << "In unique letters\n";
-  std::vector<std::string> fileNames;
-
-  for (int i = 2; i < argc; i++) {
-    std::string fileName(argv[i]);
-    std::cout << fileName << std::endl;
-    fileNames.push_back(fileName);
-  }
-  for (auto cur : fileNames) {
-    std::fstream file(cur);
-    std::string line;
-    while (getline(file, line)) {
-            storeLineTokensAlpha(uniqueLetters, line);
-    }
-    for (const auto& cur : uniqueLetters) {
-      std::cout << cur << std::endl;
-    }
-    file.close();
+  for (const auto& cur : uniqueLetters) {
+    std::cout << cur << std::endl;
   }
 }
 
 void countOfUniqueLetters(int argc, char* argv[],
                           std::map<std::string, int>& uniqueLetters) {
   std::cout << "In count of Unique letters\n";
-  std::vector<std::string> fileNames;
-
-  for (int i = 2; i < argc; i++) {
-    std::string fileName(argv[i]);
-    std::cout << fileName << std::endl;
-    fileNames.push_back(fileName);
-  }
-  for (auto cur : fileNames) {
-    std::fstream file(cur);
-    std::string line;
-    while (getline(file, line)) {
-      storeLineTokensAlpha(uniqueLetters, line);
-    }
-    for (const auto& cur : uniqueLetters) {
-      std::cout << cur.first << " => " << cur.second << std::endl;
-    }
-    file.close();
+  for (const auto& cur : uniqueLetters) {
+    std::cout << cur.first << " => " << cur.second << std::endl;
   }
 }
 
@@ -274,7 +229,6 @@ void grepSearch(int argc, char* argv[], std::map<std::string, int>& map,
   }
   std::string regSetting = argv[start - 1];
   std::regex regToSearch(regSetting);
-  std::cout << std::boolalpha<< outputLN << std::endl;
 
   for (int i = start; i < argc; i++) {
     std::string fileName(argv[i]);
@@ -287,7 +241,6 @@ void grepSearch(int argc, char* argv[], std::map<std::string, int>& map,
     std::string line;
     int lineNumber = 0;
     while (getline(file, line)) {
-      //std::cout << line << std::endl;
       std::sregex_token_iterator it(line.begin(), line.end(), regToSearch);
       std::sregex_token_iterator end;
       lineNumber++;
